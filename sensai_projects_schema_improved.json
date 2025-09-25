@@ -62,15 +62,15 @@
   ],
   "security": [
     {
-      "ApiKeyAuth": []
+      "ApiKeyQuery": []
     }
   ],
   "components": {
     "securitySchemes": {
-      "ApiKeyAuth": {
+      "ApiKeyQuery": {
         "type": "apiKey",
-        "in": "header",
-        "name": "X-Redmine-API-Key"
+        "in": "query",
+        "name": "key"
       }
     },
     "schemas": {
@@ -946,6 +946,19 @@
                       "watcher_user_ids": {
                         "type": "array",
                         "items": {"type": "integer"}
+                      },
+                      "uploads": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "token": {"type": "string", "description": "Upload token from /uploads.json"},
+                            "filename": {"type": "string", "description": "Original filename"},
+                            "description": {"type": "string", "description": "Optional attachment description"}
+                          },
+                          "required": ["token", "filename"]
+                        },
+                        "description": "Attach files using tokens from /uploads.json endpoint"
                       }
                     },
                     "required": ["project_id", "subject"]
@@ -1126,6 +1139,19 @@
                       "custom_fields": {
                         "type": "array",
                         "items": {"$ref": "#/components/schemas/CustomField"}
+                      },
+                      "uploads": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "token": {"type": "string", "description": "Upload token from /uploads.json"},
+                            "filename": {"type": "string", "description": "Original filename"},
+                            "description": {"type": "string", "description": "Optional attachment description"}
+                          },
+                          "required": ["token", "filename"]
+                        },
+                        "description": "Attach files using tokens from /uploads.json endpoint"
                       }
                     }
                   }
@@ -1524,6 +1550,49 @@
                     "attachments": {
                       "type": "array",
                       "items": {"$ref": "#/components/schemas/Attachment"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/uploads.json": {
+      "post": {
+        "tags": ["Attachments"],
+        "operationId": "uploadFile", 
+        "summary": "Upload a file to get upload token",
+        "description": "Upload a file to Redmine and receive a token to attach it to issues. This is step 1 of 2 for file attachments.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "upload": {
+                      "type": "object",
+                      "properties": {
+                        "id": {"type": "integer"},
+                        "token": {"type": "string"},
+                        "filename": {"type": "string"},
+                        "filesize": {"type": "integer"},
+                        "content_type": {"type": "string"}
+                      }
                     }
                   }
                 }
