@@ -96,18 +96,11 @@ Use POST to `/projects.json`:
 }
 ```
 
-### User Management (Full CRUD Support)
-**✅ You CAN create, update, and delete users!**
-
-#### Creating a User
-Use POST to `/users.json`:
-```json
-{
-  "user": {
-    "login": "username",
-    "firstname": "John",
-    "lastname": "Doe", 
-    "mail": "john@example.com"
-  }
-}
-```
+### Advanced Operations
+- **Archive project**: PUT `/projects/{project_id}/archive.json`
+- **Unarchive project**: PUT `/projects/{project_id}/unarchive.json`
+- **Close project**: PUT `/projects/{project_id}/close.json`
+- **Reopen project**: PUT `/projects/{project_id}/reopen.json`
+- **Manage memberships**: POST/PUT/DELETE `/projects/{project_id}/memberships.json`
+- **Upload files**: POST `/uploads.json` (use redmine_upload tool)
+- **Download files**: GET `/attachments/download/{id}/{filename}` (use redmine_download tool)

@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "MCP_DOCKER": {
+      "command": "docker",
+      "args": ["mcp", "gateway", "run"],
+      "env": {
+        "LOCALAPPDATA": "C:\\Users\\munoz\\AppData\\Local",
+        "ProgramFiles": "C:\\Program Files"
+      }
+    },
+    "redmine": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e", "REDMINE_URL",
+        "-e", "REDMINE_API_KEY", 
+        "-e", "REDMINE_REQUEST_INSTRUCTIONS",
+        "-v", "C:\\Users\\munoz\\mcp-redmine\\INSTRUCTIONS1.md:/app/INSTRUCTIONS.md",
+        "mcp-redmine"
+      ],
+      "env": {
+        "REDMINE_URL": "https://proyectos.ixacolombia.com/",
+        "REDMINE_API_KEY": "072b9f4dabbf7f807158efe880b526c7da6cb8ae",
+        "REDMINE_REQUEST_INSTRUCTIONS": "/app/INSTRUCTIONS.md"
+      }
+    }
+  }
+}
