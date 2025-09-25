@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "redmine": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-e",
+        "REDMINE_URL=https://proyectos.ixacolombia.com",
+        "-e",
+        "REDMINE_API_KEY=072b9f4dabbf7f807158efe880b526c7da6cb8ae",
+        "-e",
+        "REDMINE_REQUEST_INSTRUCTIONS=/app/REDMINE_API_GUIDE.md",
+        "mcp-redmine"
+      ]
+    }
+  }
+}

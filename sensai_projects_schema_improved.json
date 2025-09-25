@@ -1,0 +1,1702 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "IXA Sensai API - Enhanced",
+    "description": "Enhanced API for interacting with the Redmine server at IXA Colombia. Optimized for AI assistants with complete functionality coverage including time tracking, attachments, and intelligent search.",
+    "version": "3.0.0",
+    "contact": {
+      "name": "IXA Colombia",
+      "url": "https://proyectos.ixacolombia.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://proyectos.ixacolombia.com",
+      "description": "IXA Colombia Projects Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Issues",
+      "description": "Issue management and tracking",
+      "externalDocs": {
+        "url": "https://www.redmine.org/projects/redmine/wiki/Rest_Issues"
+      }
+    },
+    {
+      "name": "Projects",
+      "description": "Project management and hierarchy",
+      "externalDocs": {
+        "url": "https://www.redmine.org/projects/redmine/wiki/Rest_Projects"
+      }
+    },
+    {
+      "name": "Time Tracking",
+      "description": "Time entry management and reporting",
+      "externalDocs": {
+        "url": "https://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries"
+      }
+    },
+    {
+      "name": "Search",
+      "description": "Intelligent search and autocomplete with fuzzy matching"
+    },
+    {
+      "name": "Attachments",
+      "description": "File management and uploads",
+      "externalDocs": {
+        "url": "https://www.redmine.org/projects/redmine/wiki/Rest_Attachments"
+      }
+    },
+    {
+      "name": "Users",
+      "description": "User management and authentication",
+      "externalDocs": {
+        "url": "https://www.redmine.org/projects/redmine/wiki/Rest_Users"
+      }
+    },
+    {
+      "name": "Configuration",
+      "description": "System configuration and metadata"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Redmine-API-Key"
+      }
+    },
+    "schemas": {
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Project identifier/slug"
+          },
+          "description": {
+            "type": "string"
+          },
+          "homepage": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "description": "Project status (1=active, 5=closed, 9=archived)"
+          },
+          "is_public": {
+            "type": "boolean"
+          },
+          "inherit_members": {
+            "type": "boolean"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "parent": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "integer"},
+              "name": {"type": "string"},
+              "identifier": {"type": "string"}
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "integer"},
+                "name": {"type": "string"},
+                "identifier": {"type": "string"}
+              }
+            }
+          },
+          "trackers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tracker"
+            }
+          },
+          "issue_categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IssueCategory"
+            }
+          },
+          "enabled_modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnabledModule"
+            }
+          },
+          "custom_fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomField"
+            }
+          }
+        }
+      },
+      "Tracker": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "default_status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "Status": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "is_closed": {
+            "type": "boolean"
+          },
+          "is_default": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Priority": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "login": {
+            "type": "string"
+          },
+          "firstname": {
+            "type": "string"
+          },
+          "lastname": {
+            "type": "string"
+          },
+          "mail": {
+            "type": "string",
+            "format": "email"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_login_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "integer",
+            "description": "User status (1=active, 2=registered, 3=locked)"
+          },
+          "custom_fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomField"
+            },
+            "description": "User custom fields including availability, department, etc."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            },
+            "description": "Groups the user belongs to"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Membership"
+            },
+            "description": "Project memberships and roles"
+          },
+          "api_key": {
+            "type": "string",
+            "description": "User's API key (only visible for current user)"
+          },
+          "avatar_url": {
+            "type": "string"
+          }
+        }
+      },
+      "CustomField": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Field value - can be string, array, number, or boolean depending on field_format"
+          },
+          "multiple": {
+            "type": "boolean"
+          },
+          "field_format": {
+            "type": "string",
+            "enum": [
+              "string",
+              "text",
+              "int",
+              "float",
+              "date",
+              "bool",
+              "user",
+              "version",
+              "enumeration",
+              "key_value",
+              "link",
+              "attachment",
+              "list"
+            ],
+            "description": "Format of the custom field"
+          },
+          "possible_values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "default_value": {},
+          "visible": {
+            "type": "boolean"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TimeEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "project": {
+            "$ref": "#/components/schemas/Project"
+          },
+          "issue": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "integer"},
+              "subject": {"type": "string"}
+            }
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "activity": {
+            "$ref": "#/components/schemas/TimeEntryActivity"
+          },
+          "hours": {
+            "type": "number",
+            "minimum": 0
+          },
+          "comments": {
+            "type": "string"
+          },
+          "spent_on": {
+            "type": "string",
+            "format": "date"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "custom_fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomField"
+            }
+          }
+        }
+      },
+      "TimeEntryActivity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Attachment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "filesize": {
+            "type": "integer"
+          },
+          "content_type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "content_url": {
+            "type": "string"
+          },
+          "thumbnail_url": {
+            "type": "string"
+          },
+          "author": {
+            "$ref": "#/components/schemas/User"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "IssueRelation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "issue_id": {
+            "type": "integer"
+          },
+          "issue_to_id": {
+            "type": "integer"
+          },
+          "relation_type": {
+            "type": "string",
+            "enum": [
+              "relates",
+              "duplicates",
+              "duplicated",
+              "blocks",
+              "blocked",
+              "precedes",
+              "follows",
+              "copied_to",
+              "copied_from"
+            ]
+          },
+          "delay": {
+            "type": "integer"
+          }
+        }
+      },
+      "Journal": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "private_notes": {
+            "type": "boolean"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalDetail"
+            }
+          }
+        }
+      },
+      "JournalDetail": {
+        "type": "object",
+        "properties": {
+          "property": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "old_value": {
+            "type": "string"
+          },
+          "new_value": {
+            "type": "string"
+          }
+        }
+      },
+      "Version": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "project": {
+            "$ref": "#/components/schemas/Project"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["open", "locked", "closed"]
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "sharing": {
+            "type": "string",
+            "enum": ["none", "descendants", "hierarchy", "tree", "system"]
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "custom_fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomField"
+            }
+          }
+        }
+      },
+      "IssueCategory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "integer"},
+              "name": {"type": "string"},
+              "identifier": {"type": "string"}
+            }
+          },
+          "assigned_to": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "integer"},
+              "login": {"type": "string"},
+              "firstname": {"type": "string"},
+              "lastname": {"type": "string"},
+              "mail": {"type": "string"}
+            }
+          }
+        }
+      },
+      "EnabledModule": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "Group": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "integer"},
+                "login": {"type": "string"},
+                "firstname": {"type": "string"},
+                "lastname": {"type": "string"},
+                "mail": {"type": "string"}
+              }
+            }
+          }
+        }
+      },
+      "Membership": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "project": {
+            "$ref": "#/components/schemas/Project"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "integer"},
+              "login": {"type": "string"},
+              "firstname": {"type": "string"},
+              "lastname": {"type": "string"},
+              "mail": {"type": "string"}
+            }
+          },
+          "group": {
+            "$ref": "#/components/schemas/Group"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            }
+          }
+        }
+      },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "assignable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Query": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "is_public": {
+            "type": "boolean"
+          },
+          "project_id": {
+            "type": "integer"
+          }
+        }
+      },
+      "AutocompleteResult": {
+        "type": "object",
+        "properties": {
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["project", "issue", "user"]
+                },
+                "id": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/issues.json": {
+      "get": {
+        "tags": ["Issues"],
+        "operationId": "getIssues",
+        "summary": "Get a list of issues",
+        "description": "Returns issues filtered by various parameters including user assignment with IXA Colombia specific customizations",
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "description": "Skip this number of results for pagination"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            },
+            "description": "Maximum number of results per page"
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Include additional data (comma-separated): attachments,relations,journals,children,custom_fields,watchers,time_entries"
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by project ID"
+          },
+          {
+            "name": "subproject_id",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "Include subprojects (none, !*, any specific project id)"
+          },
+          {
+            "name": "tracker_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by tracker ID"
+          },
+          {
+            "name": "status_id",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "Filter by status ID (* for all, open, closed, or specific IDs). IXA Statuses: Idea=9, Backlog=10, To Do=1, In Progress=2, Review=3, Done=5"
+          },
+          {
+            "name": "assigned_to_id",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "Filter by assigned user ID (me for current user, or specific user ID)"
+          },
+          {
+            "name": "author_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by issue author ID"
+          },
+          {
+            "name": "priority_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by priority ID"
+          },
+          {
+            "name": "created_on",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "Filter by creation date (>=2023-01-01, ><2023-01-01|2023-12-31)"
+          },
+          {
+            "name": "updated_on",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "Filter by last update date"
+          },
+          {
+            "name": "due_date",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "Filter by due date"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "Filter by subject (contains)"
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "Filter by description (contains)"
+          },
+          {
+            "name": "done_ratio",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "Filter by completion percentage"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["id", "project", "tracker", "status", "priority", "subject", "author", "assigned_to", "updated_on", "category", "due_date", "created_on", "id:desc", "project:desc", "tracker:desc", "status:desc", "priority:desc", "subject:desc", "author:desc", "assigned_to:desc", "updated_on:desc", "category:desc", "due_date:desc", "created_on:desc"]
+            },
+            "description": "Sort field (add :desc for descending)"
+          },
+          {
+            "name": "query_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by predefined query ID"
+          },
+          {
+            "name": "cf_69",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "Strategic Importance custom field (IXA Colombia specific)"
+          },
+          {
+            "name": "cf_70",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "Execution Feasibility custom field (IXA Colombia specific)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Issues retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {"type": "integer"},
+                          "project": {
+                            "type": "object",
+                            "properties": {
+                              "id": {"type": "integer"},
+                              "name": {"type": "string"},
+                              "identifier": {"type": "string"}
+                            }
+                          },
+                          "tracker": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+                          "status": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+                          "priority": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+                          "author": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+                          "subject": {"type": "string"},
+                          "description": {"type": "string"},
+                          "start_date": {"type": "string", "format": "date"},
+                          "due_date": {"type": "string", "format": "date"},
+                          "done_ratio": {"type": "integer"},
+                          "is_private": {"type": "boolean"},
+                          "estimated_hours": {"type": "number"},
+                          "created_on": {"type": "string", "format": "date-time"},
+                          "updated_on": {"type": "string", "format": "date-time"},
+                          "closed_on": {"type": "string", "format": "date-time"}
+                        }
+                      }
+                    },
+                    "total_count": {"type": "integer"},
+                    "offset": {"type": "integer"},
+                    "limit": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          },
+          "401": {"description": "Unauthorized"},
+          "403": {"description": "Forbidden"}
+        }
+      },
+      "post": {
+        "tags": ["Issues"],
+        "operationId": "createIssue",
+        "summary": "Create a new issue",
+        "description": "Creates a new issue with IXA Colombia specific fields and validations",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "object",
+                    "properties": {
+                      "project_id": {"type": "integer"},
+                      "tracker_id": {"type": "integer"},
+                      "status_id": {"type": "integer"},
+                      "priority_id": {"type": "integer"},
+                      "subject": {"type": "string"},
+                      "description": {"type": "string"},
+                      "assigned_to_id": {"type": "integer"},
+                      "category_id": {"type": "integer"},
+                      "parent_issue_id": {"type": "integer"},
+                      "start_date": {"type": "string", "format": "date"},
+                      "due_date": {"type": "string", "format": "date"},
+                      "estimated_hours": {"type": "number"},
+                      "done_ratio": {"type": "integer", "minimum": 0, "maximum": 100},
+                      "custom_fields": {
+                        "type": "array",
+                        "items": {"$ref": "#/components/schemas/CustomField"}
+                      },
+                      "watcher_user_ids": {
+                        "type": "array",
+                        "items": {"type": "integer"}
+                      }
+                    },
+                    "required": ["project_id", "subject"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Issue created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "issue": {
+                      "type": "object",
+                      "properties": {
+                        "id": {"type": "integer"},
+                        "project": {
+                          "type": "object",
+                          "properties": {
+                            "id": {"type": "integer"},
+                            "name": {"type": "string"},
+                            "identifier": {"type": "string"}
+                          }
+                        },
+                        "tracker": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+                        "status": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+                        "priority": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+                        "author": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+                        "subject": {"type": "string"},
+                        "description": {"type": "string"},
+                        "start_date": {"type": "string", "format": "date"},
+                        "due_date": {"type": "string", "format": "date"},
+                        "done_ratio": {"type": "integer"},
+                        "is_private": {"type": "boolean"},
+                        "estimated_hours": {"type": "number"},
+                        "created_on": {"type": "string", "format": "date-time"},
+                        "updated_on": {"type": "string", "format": "date-time"},
+                        "closed_on": {"type": "string", "format": "date-time"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation errors",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/issues/{issueId}.json": {
+      "get": {
+        "tags": ["Issues"],
+        "operationId": "getIssue",
+        "summary": "Get issue details",
+        "parameters": [
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Issue ID"
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Include additional data (comma-separated): attachments,relations,journals,children,custom_fields,watchers,time_entries"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Issue details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "issue": {
+                      "type": "object",
+                      "properties": {
+                        "id": {"type": "integer"},
+                        "project": {
+                          "type": "object",
+                          "properties": {
+                            "id": {"type": "integer"},
+                            "name": {"type": "string"},
+                            "identifier": {"type": "string"}
+                          }
+                        },
+                        "tracker": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+                        "status": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+                        "priority": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+                        "author": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+                        "subject": {"type": "string"},
+                        "description": {"type": "string"},
+                        "start_date": {"type": "string", "format": "date"},
+                        "due_date": {"type": "string", "format": "date"},
+                        "done_ratio": {"type": "integer"},
+                        "is_private": {"type": "boolean"},
+                        "estimated_hours": {"type": "number"},
+                        "created_on": {"type": "string", "format": "date-time"},
+                        "updated_on": {"type": "string", "format": "date-time"},
+                        "closed_on": {"type": "string", "format": "date-time"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {"description": "Issue not found"}
+        }
+      },
+      "put": {
+        "tags": ["Issues"],
+        "operationId": "updateIssue",
+        "summary": "Update an issue",
+        "parameters": [
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Issue ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "object",
+                    "properties": {
+                      "project_id": {"type": "integer"},
+                      "tracker_id": {"type": "integer"},
+                      "status_id": {"type": "integer"},
+                      "priority_id": {"type": "integer"},
+                      "subject": {"type": "string"},
+                      "description": {"type": "string"},
+                      "assigned_to_id": {"type": "integer"},
+                      "category_id": {"type": "integer"},
+                      "parent_issue_id": {"type": "integer"},
+                      "start_date": {"type": "string", "format": "date"},
+                      "due_date": {"type": "string", "format": "date"},
+                      "estimated_hours": {"type": "number"},
+                      "done_ratio": {"type": "integer", "minimum": 0, "maximum": 100},
+                      "notes": {"type": "string"},
+                      "private_notes": {"type": "boolean"},
+                      "custom_fields": {
+                        "type": "array",
+                        "items": {"$ref": "#/components/schemas/CustomField"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Issue updated successfully"},
+          "404": {"description": "Issue not found"},
+          "422": {
+            "description": "Validation errors including 'Tarea principal no es válido' when parent_issue_id is invalid",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Issues"],
+        "operationId": "deleteIssue",
+        "summary": "Delete an issue",
+        "parameters": [
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Issue ID"
+          }
+        ],
+        "responses": {
+          "200": {"description": "Issue deleted successfully"},
+          "404": {"description": "Issue not found"},
+          "422": {"description": "Cannot delete issue"}
+        }
+      }
+    },
+    "/issues/{issueId}/relations.json": {
+      "get": {
+        "tags": ["Issues"],
+        "operationId": "getIssueRelations",
+        "summary": "Get issue relations",
+        "description": "Returns relationships between issues (blocks, precedes, relates, etc.)",
+        "parameters": [
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Issue ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Issue relations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "relations": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/IssueRelation"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Issues"],
+        "operationId": "createIssueRelation",
+        "summary": "Create issue relation",
+        "parameters": [
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Issue ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "relation": {
+                    "type": "object",
+                    "properties": {
+                      "issue_to_id": {"type": "integer"},
+                      "relation_type": {
+                        "type": "string",
+                        "enum": ["relates", "duplicates", "duplicated", "blocks", "blocked", "precedes", "follows"]
+                      },
+                      "delay": {"type": "integer"}
+                    },
+                    "required": ["issue_to_id", "relation_type"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Relation created successfully"},
+          "422": {"description": "Validation errors"}
+        }
+      }
+    },
+    "/time_entries.json": {
+      "get": {
+        "tags": ["Time Tracking"],
+        "operationId": "getTimeEntries",
+        "summary": "Get time entries",
+        "description": "Returns time entries with filtering options for productivity tracking",
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "description": "Skip this number of results for pagination"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            },
+            "description": "Maximum number of results per page"
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by project ID"
+          },
+          {
+            "name": "issue_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by issue ID"
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "Filter by user ID (me for current user)"
+          },
+          {
+            "name": "spent_on",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "Filter by date (>=2023-01-01, ><2023-01-01|2023-12-31)"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {"type": "string", "format": "date"},
+            "description": "From date"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {"type": "string", "format": "date"},
+            "description": "To date"
+          },
+          {
+            "name": "activity_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by activity ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Time entries retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "time_entries": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/TimeEntry"}
+                    },
+                    "total_count": {"type": "integer"},
+                    "offset": {"type": "integer"},
+                    "limit": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Time Tracking"],
+        "operationId": "createTimeEntry",
+        "summary": "Create time entry",
+        "description": "Creates a new time entry for productivity tracking",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "time_entry": {
+                    "type": "object",
+                    "properties": {
+                      "project_id": {"type": "integer"},
+                      "issue_id": {"type": "integer"},
+                      "spent_on": {"type": "string", "format": "date"},
+                      "hours": {"type": "number", "minimum": 0},
+                      "activity_id": {"type": "integer"},
+                      "comments": {"type": "string"},
+                      "custom_fields": {
+                        "type": "array",
+                        "items": {"$ref": "#/components/schemas/CustomField"}
+                      }
+                    },
+                    "required": ["hours", "spent_on"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Time entry created successfully"},
+          "422": {"description": "Validation errors"}
+        }
+      }
+    },
+    "/time_entries/{timeEntryId}.json": {
+      "get": {
+        "tags": ["Time Tracking"],
+        "operationId": "getTimeEntry",
+        "summary": "Get time entry details",
+        "parameters": [
+          {
+            "name": "timeEntryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Time Entry ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Time entry details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "time_entry": {"$ref": "#/components/schemas/TimeEntry"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {"description": "Time entry not found"}
+        }
+      },
+      "put": {
+        "tags": ["Time Tracking"],
+        "operationId": "updateTimeEntry",
+        "summary": "Update time entry",
+        "parameters": [
+          {
+            "name": "timeEntryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Time Entry ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "time_entry": {
+                    "type": "object",
+                    "properties": {
+                      "project_id": {"type": "integer"},
+                      "issue_id": {"type": "integer"},
+                      "spent_on": {"type": "string", "format": "date"},
+                      "hours": {"type": "number", "minimum": 0},
+                      "activity_id": {"type": "integer"},
+                      "comments": {"type": "string"},
+                      "custom_fields": {
+                        "type": "array",
+                        "items": {"$ref": "#/components/schemas/CustomField"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Time entry updated successfully"},
+          "404": {"description": "Time entry not found"},
+          "422": {"description": "Validation errors"}
+        }
+      },
+      "delete": {
+        "tags": ["Time Tracking"],
+        "operationId": "deleteTimeEntry",
+        "summary": "Delete time entry",
+        "parameters": [
+          {
+            "name": "timeEntryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Time Entry ID"
+          }
+        ],
+        "responses": {
+          "200": {"description": "Time entry deleted successfully"},
+          "404": {"description": "Time entry not found"}
+        }
+      }
+    },
+    "/attachments.json": {
+      "get": {
+        "tags": ["Attachments"],
+        "operationId": "getAttachments",
+        "summary": "List attachments",
+        "description": "Returns attachments with filtering options",
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "description": "Skip this number of results for pagination"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            },
+            "description": "Maximum number of results per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachments retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "attachments": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Attachment"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects.json": {
+      "get": {
+        "tags": ["Projects"],
+        "operationId": "getProjects",
+        "summary": "Get all accessible projects",
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "description": "Skip this number of results for pagination"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            },
+            "description": "Maximum number of results per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Projects list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "projects": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Project"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search.json": {
+      "get": {
+        "tags": ["Search"],
+        "operationId": "searchContent",
+        "summary": "Enhanced global search",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {"type": "integer"},
+                          "type": {"type": "string", "enum": ["issue", "project"]},
+                          "title": {"type": "string"},
+                          "description": {"type": "string"},
+                          "url": {"type": "string"}
+                        }
+                      }
+                    },
+                    "total_count": {"type": "integer"},
+                    "offset": {"type": "integer"},
+                    "limit": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/my/account.json": {
+      "get": {
+        "tags": ["Users"],
+        "operationId": "getCurrentUser",
+        "summary": "Get current user",
+        "responses": {
+          "200": {
+            "description": "Current user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {"$ref": "#/components/schemas/User"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trackers.json": {
+      "get": {
+        "tags": ["Configuration"],
+        "operationId": "getTrackers",
+        "summary": "Get trackers",
+        "responses": {
+          "200": {
+            "description": "Trackers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "trackers": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Tracker"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/issue_statuses.json": {
+      "get": {
+        "tags": ["Configuration"],
+        "operationId": "getIssueStatuses", 
+        "summary": "Get issue statuses",
+        "responses": {
+          "200": {
+            "description": "Issue statuses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "issue_statuses": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Status"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

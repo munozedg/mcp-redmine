@@ -1,0 +1,2478 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "IXA API",
+    "description": "API for interacting with the Redmine server at IXA Colombia. User context is handled through query parameters.",
+    "version": "2.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://proyectos.ixacolombia.com",
+      "description": "IXA Colombia Projects Server"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Redmine-API-Key"
+      }
+    },
+    "schemas": {
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Project identifier/slug"
+          },
+          "description": {
+            "type": "string"
+          },
+          "homepage": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "description": "Project status (1=active, 5=closed, 9=archived)"
+          },
+          "is_public": {
+            "type": "boolean"
+          },
+          "inherit_members": {
+            "type": "boolean"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "parent": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "identifier": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "trackers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tracker"
+            }
+          },
+          "issue_categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "enabled_modules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "custom_fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomField"
+            }
+          }
+        }
+      },
+      "Tracker": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "default_status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "Status": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "is_closed": {
+            "type": "boolean"
+          },
+          "is_default": {
+            "type": "boolean"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "login": {
+            "type": "string"
+          },
+          "firstname": {
+            "type": "string"
+          },
+          "lastname": {
+            "type": "string"
+          },
+          "mail": {
+            "type": "string"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_login_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "integer",
+            "description": "User status (1=active, 2=registered, 3=locked)"
+          },
+          "custom_fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomField"
+            },
+            "description": "User custom fields including availability, department, etc."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Groups the user belongs to"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Membership"
+            },
+            "description": "Project memberships and roles"
+          },
+          "api_key": {
+            "type": "string",
+            "description": "User's API key (only visible for current user)"
+          },
+          "avatar_url": {
+            "type": "string",
+            "description": "URL to user's avatar image"
+          }
+        }
+      },
+      "CustomField": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {"type": "string"},
+              {"type": "array", "items": {"type": "string"}},
+              {"type": "number"},
+              {"type": "boolean"}
+            ],
+            "description": "Field value - can be string, array, number, or boolean depending on field_format"
+          },
+          "multiple": {
+            "type": "boolean"
+          },
+          "field_format": {
+            "type": "string",
+            "enum": [
+              "string",
+              "text", 
+              "int",
+              "float",
+              "date",
+              "bool",
+              "list",
+              "user",
+              "version",
+              "enumeration",
+              "attachment",
+              "link"
+            ],
+            "description": "Format of the custom field"
+          },
+          "possible_values": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Available values for list/enumeration fields"
+          }
+        }
+      },
+      "Issue": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "project": {
+            "$ref": "#/components/schemas/Project"
+          },
+          "tracker": {
+            "$ref": "#/components/schemas/Tracker"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "author": {
+            "$ref": "#/components/schemas/User"
+          },
+          "assigned_to": {
+            "$ref": "#/components/schemas/User"
+          },
+          "category": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "subject": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "done_ratio": {
+            "type": "integer"
+          },
+          "estimated_hours": {
+            "type": "number"
+          },
+          "spent_hours": {
+            "type": "number"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closed_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "parent": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              }
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "tracker": {
+                  "$ref": "#/components/schemas/Tracker"
+                },
+                "subject": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "filename": {
+                  "type": "string"
+                },
+                "filesize": {
+                  "type": "integer"
+                },
+                "content_type": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "content_url": {
+                  "type": "string"
+                },
+                "author": {
+                  "$ref": "#/components/schemas/User"
+                },
+                "created_on": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "issue_id": {
+                  "type": "integer"
+                },
+                "issue_to_id": {
+                  "type": "integer"
+                },
+                "relation_type": {
+                  "type": "string",
+                  "enum": [
+                    "relates",
+                    "duplicates",
+                    "duplicated",
+                    "blocks",
+                    "blocked",
+                    "precedes",
+                    "follows",
+                    "copied_to",
+                    "copied_from"
+                  ]
+                },
+                "delay": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "journals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "user": {
+                  "$ref": "#/components/schemas/User"
+                },
+                "notes": {
+                  "type": "string"
+                },
+                "created_on": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "private_notes": {
+                  "type": "boolean"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "property": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "old_value": {
+                        "type": "string"
+                      },
+                      "new_value": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "custom_fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomField"
+            }
+          },
+          "watchers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            },
+            "description": "Users watching this issue"
+          }
+        }
+      },
+      "Membership": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "login": {
+                "type": "string"
+              },
+              "firstname": {
+                "type": "string"
+              },
+              "lastname": {
+                "type": "string"
+              },
+              "mail": {
+                "type": "string"
+              }
+            }
+          },
+          "group": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/issues.json": {
+      "get": {
+        "operationId": "getIssues",
+        "summary": "Get a list of issues",
+        "description": "Returns issues filtered by various parameters including user assignment",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filter by project ID"
+          },
+          {
+            "name": "subproject_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Include subprojects (none, !*, any specific project id)"
+          },
+          {
+            "name": "tracker_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filter by tracker ID"
+          },
+          {
+            "name": "status_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by status ID (* for all, open, closed, or specific IDs)"
+          },
+          {
+            "name": "assigned_to_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by assigned user ID (me for current user, or specific user ID)"
+          },
+          {
+            "name": "author_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filter by issue author ID"
+          },
+          {
+            "name": "category_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filter by category ID"
+          },
+          {
+            "name": "priority_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filter by priority ID"
+          },
+          {
+            "name": "created_on",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by creation date (>=2023-01-01, ><2023-01-01|2023-12-31)"
+          },
+          {
+            "name": "updated_on",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by last update date"
+          },
+          {
+            "name": "due_date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by due date"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by start date"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by subject (contains)"
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by description (contains)"
+          },
+          {
+            "name": "done_ratio",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by completion percentage"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "id",
+                "project",
+                "tracker",
+                "status",
+                "priority",
+                "subject",
+                "author",
+                "assigned_to",
+                "updated_on",
+                "category",
+                "created_on",
+                "due_date"
+              ]
+            },
+            "description": "Sort field (add :desc for descending)"
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Additional data to include (attachments,relations,journals,children,custom_fields,watchers)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 25,
+              "maximum": 100
+            },
+            "description": "Number of items per page"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "Offset for pagination"
+          },
+          {
+            "name": "query_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filter by predefined query ID"
+          },
+          {
+            "name": "text_search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fuzzy text search across subject, description, and notes"
+          },
+          {
+            "name": "subject_fuzzy",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fuzzy search specifically in issue subjects"
+          },
+          {
+            "name": "description_fuzzy",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fuzzy search in descriptions and notes"
+          },
+          {
+            "name": "cf_search",
+            "in": "query",
+            "schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {
+                "anyOf": [
+                  {"type": "string"},
+                  {"type": "array", "items": {"type": "string"}}
+                ]
+              },
+              "example": {
+                "deliverables": "database migration",
+                "technology_stack": ["React", "Node.js"],
+                "client_contact": "Maria Silva"
+              }
+            },
+            "description": "Search within custom fields by field name (supports fuzzy matching)"
+          },
+          {
+            "name": "search_operator",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["and", "or"],
+              "default": "and"
+            },
+            "description": "Combine multiple search terms with AND/OR logic"
+          },
+          {
+            "name": "fuzzy_threshold",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.6
+            },
+            "description": "Fuzzy matching sensitivity for text searches (0=exact, 1=very loose)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of issues",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Issue"
+                      }
+                    },
+                    "total_count": {
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "$ref": "#/components/schemas/Error"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createIssue",
+        "summary": "Create a new issue",
+        "description": "Creates a new issue with specified user context",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "issue"
+                ],
+                "properties": {
+                  "issue": {
+                    "type": "object",
+                    "required": [
+                      "project_id",
+                      "subject"
+                    ],
+                    "properties": {
+                      "project_id": {
+                        "type": "integer"
+                      },
+                      "tracker_id": {
+                        "type": "integer"
+                      },
+                      "status_id": {
+                        "type": "integer"
+                      },
+                      "priority_id": {
+                        "type": "integer"
+                      },
+                      "category_id": {
+                        "type": "integer"
+                      },
+                      "subject": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "assigned_to_id": {
+                        "type": "integer",
+                        "description": "User ID for assignment"
+                      },
+                      "author_id": {
+                        "type": "integer",
+                        "description": "ID of the user creating the issue"
+                      },
+                      "parent_issue_id": {
+                        "type": "integer",
+                        "description": "Parent issue ID for subtasks"
+                      },
+                      "start_date": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "due_date": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "estimated_hours": {
+                        "type": "number"
+                      },
+                      "done_ratio": {
+                        "type": "integer"
+                      },
+                      "is_private": {
+                        "type": "boolean"
+                      },
+                      "custom_fields": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/CustomField"
+                        }
+                      },
+                      "uploads": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "token": {
+                              "type": "string"
+                            },
+                            "filename": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Issue created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "issue": {
+                      "$ref": "#/components/schemas/Issue"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "$ref": "#/components/schemas/Error"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable entity",
+            "content": {
+              "application/json": {
+                "$ref": "#/components/schemas/Error"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/issues/{issueId}.json": {
+      "get": {
+        "operationId": "getIssue",
+        "summary": "Get issue details",
+        "parameters": [
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the issue to retrieve"
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Additional data to include (attachments,relations,journals,children,custom_fields,watchers)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Issue details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "issue": {
+                      "$ref": "#/components/schemas/Issue"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Issue not found"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateIssue",
+        "summary": "Update an issue",
+        "parameters": [
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the issue to update"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "issue"
+                ],
+                "properties": {
+                  "issue": {
+                    "type": "object",
+                    "properties": {
+                      "project_id": {
+                        "type": "integer"
+                      },
+                      "tracker_id": {
+                        "type": "integer"
+                      },
+                      "status_id": {
+                        "type": "integer"
+                      },
+                      "priority_id": {
+                        "type": "integer"
+                      },
+                      "category_id": {
+                        "type": "integer"
+                      },
+                      "subject": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "assigned_to_id": {
+                        "type": "integer"
+                      },
+                      "parent_issue_id": {
+                        "type": "integer",
+                        "description": "Parent issue ID for subtasks. IMPORTANT: Do not include this field if value is 0 or null - omit entirely to avoid 'parent not valid' errors"
+                      },
+                      "start_date": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "due_date": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "estimated_hours": {
+                        "type": "number"
+                      },
+                      "done_ratio": {
+                        "type": "integer"
+                      },
+                      "is_private": {
+                        "type": "boolean"
+                      },
+                      "notes": {
+                        "type": "string",
+                        "description": "Comments to add to the issue"
+                      },
+                      "private_notes": {
+                        "type": "boolean",
+                        "description": "Whether the notes should be private"
+                      },
+                      "custom_fields": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/CustomField"
+                        }
+                      },
+                      "uploads": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "token": {
+                              "type": "string"
+                            },
+                            "filename": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Issue updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "issue": {
+                      "$ref": "#/components/schemas/Issue"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "$ref": "#/components/schemas/Error"
+              }
+            }
+          },
+          "404": {
+            "description": "Issue not found"
+          },
+          "422": {
+            "description": "Unprocessable entity",
+            "content": {
+              "application/json": {
+                "$ref": "#/components/schemas/Error"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteIssue",
+        "summary": "Delete an issue",
+        "parameters": [
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the issue to delete"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Issue deleted successfully"
+          },
+          "404": {
+            "description": "Issue not found"
+          },
+          "422": {
+            "description": "Issue cannot be deleted"
+          }
+        }
+      }
+    },
+    "/my/account.json": {
+      "get": {
+        "operationId": "getCurrentUser",
+        "summary": "Get current user information",
+        "description": "Returns information about the authenticated user",
+        "parameters": [
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Additional data to include (custom_fields,groups,memberships)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current user details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/projects.json": {
+      "get": {
+        "operationId": "getProjects",
+        "summary": "Get all accessible projects (exact matching only)",
+        "description": "Returns list of projects the user has access to. NOTE: Only supports exact matching. For partial/fuzzy search, use /search.json with projects=1",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter projects by exact name match (case-insensitive)"
+          },
+          {
+            "name": "name_partial",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter projects by partial name/title match (case-insensitive substring search)"
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter projects by identifier/slug (rarely used - prefer name-based searches)"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                1,
+                5,
+                9
+              ]
+            },
+            "description": "Filter by project status (1=active, 5=closed, 9=archived)"
+          },
+          {
+            "name": "is_public",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Filter by project visibility"
+          },
+          {
+            "name": "parent_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "*"
+            },
+            "description": "Filter by parent project ID (!* for root projects, * for all including subprojects - DEFAULT: * (always include subprojects))"
+          },
+          {
+            "name": "include_subprojects",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Always include subprojects in search results (DEFAULT: true for hierarchical structure)"
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Include additional data (trackers,issue_categories,enabled_modules,custom_fields)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 25,
+              "maximum": 100
+            },
+            "description": "Number of projects per page"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "Offset for pagination"
+          },
+          {
+            "name": "description_contains",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fuzzy search within project descriptions"
+          },
+          {
+            "name": "has_activity",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["last_week", "last_month", "last_quarter"]
+            },
+            "description": "Filter by recent project activity"
+          },
+          {
+            "name": "member_search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Find projects by team member name (fuzzy matching)"
+          },
+          {
+            "name": "fuzzy_threshold",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.6
+            },
+            "description": "Fuzzy matching sensitivity for text searches (0=exact, 1=very loose)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of projects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "projects": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Project"
+                      }
+                    },
+                    "total_count": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/projects/{projectId}.json": {
+      "get": {
+        "operationId": "getProject",
+        "summary": "Get project details",
+        "description": "Returns detailed information about a specific project including subprojects",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID or identifier of the project to retrieve"
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Include additional data (trackers,issue_categories,enabled_modules,custom_fields)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Project details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "project": {
+                      "$ref": "#/components/schemas/Project"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied"
+          },
+          "404": {
+            "description": "Project not found"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateProject",
+        "summary": "Update an existing project",
+        "description": "Updates project information including custom fields, name, description, and other properties",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID or identifier of the project to update"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "project"
+                ],
+                "properties": {
+                  "project": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Project name/title"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Project description"
+                      },
+                      "homepage": {
+                        "type": "string",
+                        "description": "Project homepage URL"
+                      },
+                      "is_public": {
+                        "type": "boolean",
+                        "description": "Whether the project is public"
+                      },
+                      "parent_id": {
+                        "type": "integer",
+                        "description": "Parent project ID (for subprojects)"
+                      },
+                      "inherit_members": {
+                        "type": "boolean",
+                        "description": "Inherit members from parent project"
+                      },
+                      "default_assigned_to_id": {
+                        "type": "integer",
+                        "description": "Default assignee for new issues"
+                      },
+                      "default_version_id": {
+                        "type": "integer",
+                        "description": "Default version for new issues"
+                      },
+                      "tracker_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "Enabled tracker IDs"
+                      },
+                      "enabled_module_names": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Enabled module names"
+                      },
+                      "issue_custom_field_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "Enabled custom field IDs for issues"
+                      },
+                      "custom_fields": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/CustomField"
+                        },
+                        "description": "Project custom fields with values"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Project updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "project": {
+                      "$ref": "#/components/schemas/Project"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "$ref": "#/components/schemas/Error"
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found"
+          },
+          "422": {
+            "description": "Unprocessable entity",
+            "content": {
+              "application/json": {
+                "$ref": "#/components/schemas/Error"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{projectId}/memberships.json": {
+      "get": {
+        "operationId": "getProjectMemberships",
+        "summary": "Get project memberships",
+        "description": "Returns list of users and their roles in the project",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID or identifier of the project"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 25
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Project memberships",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "memberships": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Membership"
+                      }
+                    },
+                    "total_count": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied"
+          },
+          "404": {
+            "description": "Project not found"
+          }
+        }
+      }
+    },
+    "/trackers.json": {
+      "get": {
+        "operationId": "getTrackers",
+        "summary": "Get all trackers",
+        "description": "Returns list of available issue trackers",
+        "responses": {
+          "200": {
+            "description": "List of trackers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "trackers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Tracker"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/issue_statuses.json": {
+      "get": {
+        "operationId": "getIssueStatuses",
+        "summary": "Get all issue statuses",
+        "description": "Returns list of available issue statuses",
+        "responses": {
+          "200": {
+            "description": "List of issue statuses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "issue_statuses": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Status"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users.json": {
+      "get": {
+        "operationId": "getUsers",
+        "summary": "Get users for assignment",
+        "description": "Returns list of users available for issue assignment",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            "description": "Filter by user status (0=all, 1=active, 2=registered, 3=locked)"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by name (partial match)"
+          },
+          {
+            "name": "group_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filter by group membership"
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Include additional data (custom_fields,groups,memberships)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 25,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "users": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    },
+                    "total_count": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}.json": {
+      "get": {
+        "operationId": "getUser",
+        "summary": "Get specific user details",
+        "description": "Returns detailed information about a specific user including custom fields",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the user to retrieve"
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Include additional data (custom_fields,groups,memberships)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      }
+    },
+    "/search.json": {
+      "get": {
+        "operationId": "searchContent",
+        "summary": "Search across projects and issues",
+        "description": "Enhanced global search with fuzzy matching, relevance scoring, and intelligent suggestions",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search query with intelligent fuzzy matching and typo tolerance"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "my_projects",
+                "subprojects"
+              ]
+            },
+            "description": "Search scope"
+          },
+          {
+            "name": "all_words",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Match all words in query"
+          },
+          {
+            "name": "titles_only",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Search only in titles"
+          },
+          {
+            "name": "issues",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Include issues in search"
+          },
+          {
+            "name": "projects",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Include projects in search"
+          },
+          {
+            "name": "fuzzy_threshold",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.6
+            },
+            "description": "Fuzzy matching sensitivity (0=exact, 1=very loose)"
+          },
+          {
+            "name": "min_score",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.1
+            },
+            "description": "Minimum relevance score for results (0-1)"
+          },
+          {
+            "name": "search_fields",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "subject",
+                  "description",
+                  "notes",
+                  "custom_fields",
+                  "project_name",
+                  "project_description",
+                  "all"
+                ]
+              }
+            },
+            "description": "Specific fields to search (default: all)"
+          },
+          {
+            "name": "highlight",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Highlight matching terms in results"
+          },
+          {
+            "name": "suggest",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Include search suggestions for typos and alternatives"
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["relevance", "date", "priority", "status"],
+              "default": "relevance"
+            },
+            "description": "Sort search results by criteria"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "issue",
+                              "project"
+                            ]
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "datetime": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "score": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "description": "Relevance score (0-1)"
+                          },
+                          "highlights": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "description": "Highlighted matching text fragments by field"
+                          },
+                          "context": {
+                            "type": "string",
+                            "description": "Contextual snippet showing the match"
+                          }
+                        }
+                      }
+                    },
+                    "total_count": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "type": "integer"
+                    },
+                    "suggestions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Alternative search suggestions for typos or related terms"
+                    },
+                    "max_score": {
+                      "type": "number",
+                      "description": "Highest relevance score in results"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/autocomplete.json": {
+      "get": {
+        "operationId": "getAutocomplete",
+        "summary": "Intelligent search suggestions",
+        "description": "Provides real-time search suggestions as user types with context-aware recommendations",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            },
+            "description": "Partial search query (minimum 2 characters)"
+          },
+          {
+            "name": "context",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "issues",
+                "projects", 
+                "users",
+                "all"
+              ],
+              "default": "all"
+            },
+            "description": "Context for suggestions"
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Limit suggestions to specific project"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "maximum": 20
+            },
+            "description": "Maximum number of suggestions to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Auto-complete suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "suggestions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "text": {
+                            "type": "string",
+                            "description": "Suggested search text"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "issue",
+                              "project",
+                              "user",
+                              "custom_field",
+                              "keyword"
+                            ],
+                            "description": "Type of suggestion"
+                          },
+                          "score": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "description": "Relevance score (0-1)"
+                          },
+                          "context": {
+                            "type": "string",
+                            "description": "Additional context about the suggestion"
+                          },
+                          "id": {
+                            "type": "integer",
+                            "description": "ID of the suggested item (if applicable)"
+                          }
+                        },
+                        "required": ["text", "type", "score"]
+                      }
+                    },
+                    "total_count": {
+                      "type": "integer",
+                      "description": "Total number of available suggestions"
+                    }
+                  },
+                  "required": ["suggestions"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search.json": {
+      "get": {
+        "operationId": "searchContent",
+        "summary": "Global search across Redmine content",
+        "description": "Universal search endpoint for finding projects, issues, and other content with partial matching support",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search query (supports partial matching)"
+          },
+          {
+            "name": "projects",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [1]
+            },
+            "description": "Include projects in search results (set to 1)"
+          },
+          {
+            "name": "issues",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [1]
+            },
+            "description": "Include issues in search results (set to 1)"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["all", "my_project", "subprojects"]
+            },
+            "description": "Search scope (use 'all' for comprehensive search)"
+          },
+          {
+            "name": "all_words",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [1]
+            },
+            "description": "Match all words in query (set to 1)"
+          },
+          {
+            "name": "titles_only",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [1]
+            },
+            "description": "Search only in titles (set to 1)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 25,
+              "maximum": 100
+            },
+            "description": "Number of results per page"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "Offset for pagination"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "datetime": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "total_count": {
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/queries.json": {
+      "get": {
+        "operationId": "listQueries",
+        "summary": "Get available custom queries (saved reports)",
+        "description": "Lists predefined queries including ongoing tasks, backlogs, and due date reports",
+        "responses": {
+          "200": {
+            "description": "List of available custom queries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "queries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "enum": [
+                              26,
+                              32,
+                              42,
+                              48,
+                              43,
+                              50,
+                              46,
+                              44,
+                              45,
+                              47,
+                              24,
+                              55,
+                              56,
+                              54,
+                              53,
+                              49,
+                              39,
+                              23,
+                              51,
+                              19,
+                              52,
+                              22,
+                              38,
+                              21,
+                              20
+                            ]
+                          },
+                          "name": {
+                            "type": "string",
+                            "enum": [
+                              "Ongoing",
+                              "Ongoing per member",
+                              "Doing Now / En Ejecución",
+                              "Doing Now / En Ejecución (All)",
+                              "To-Do Next / Por Hacer",
+                              "To-Do Next / Por Hacer (All)",
+                              "On Feedback",
+                              "Backlog / Plan General",
+                              "Backlog / Plan General (All)",
+                              "Due Next 14 days",
+                              "Due Next 14 days (All)",
+                              "Quick Tasks",
+                              "Quick Tasks (All)",
+                              "Start Next 14 days",
+                              "Start Next 14 days (All)",
+                              "Due Today",
+                              "Due Today (All)",
+                              "Due Next 10 days",
+                              "Overdue < 15 days",
+                              "Overdue < 15 days (All)",
+                              "Overdue > 15 days",
+                              "Overdue > 15 days (All)",
+                              "Feedback",
+                              "Done / Open",
+                              "No Due Date"
+                            ]
+                          },
+                          "is_public": {
+                            "type": "boolean"
+                          },
+                          "category": {
+                            "type": "string",
+                            "enum": [
+                              "current",
+                              "upcoming",
+                              "overdue",
+                              "other"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
