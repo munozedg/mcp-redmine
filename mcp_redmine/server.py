@@ -1,4 +1,6 @@
 import os, yaml, pathlib
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urljoin
 
 import httpx
@@ -183,8 +185,43 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
     except Exception as e:
         return yd({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
 
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    """Simple HTTP handler for health checks."""
+    def do_GET(self):
+        if self.path == '/' or self.path == '/health':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(b'{"status":"ok","service":"mcp-redmine"}\n')
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def log_message(self, format, *args):
+        # Suppress HTTP server logs
+        pass
+
+def start_health_server(port=8080):
+    """Start a simple HTTP server for health checks in a background thread."""
+    try:
+        server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        get_logger(__name__).info(f"Health check server started on port {port}")
+    except Exception as e:
+        get_logger(__name__).warning(f"Failed to start health check server: {e}")
+
 def main():
     """Main entry point for the mcp-redmine package."""
+    # Start health check server if PORT environment variable is set (App Platform)
+    health_port = os.environ.get('PORT', os.environ.get('HTTP_PORT', '8080'))
+    try:
+        start_health_server(int(health_port))
+    except (ValueError, OSError):
+        # If port is not set or not available, continue without health server
+        pass
+    
+    # Run the MCP server (stdio-based)
     mcp.run()
 
 if __name__ == "__main__":

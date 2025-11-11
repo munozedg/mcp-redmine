@@ -16,8 +16,14 @@ services:
     environment_slug: docker
     instance_count: 1
     instance_size_slug: basic-xxs
-    # Note: MCP servers communicate via stdio, not HTTP
-    # Health checks and HTTP ports are not applicable for this service type
+    http_port: 8080
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
     envs:
       - key: REDMINE_URL
         scope: RUN_TIME
