@@ -1,5 +1,6 @@
 import os, yaml, pathlib
 import threading
+import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urljoin
 
@@ -207,21 +208,37 @@ def start_health_server(port=8080):
         server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
-        get_logger(__name__).info(f"Health check server started on port {port}")
+        # Give the server a moment to start listening
+        time.sleep(0.5)
+        # Verify the server is actually listening
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(('127.0.0.1', port))
+        sock.close()
+        if result == 0:
+            get_logger(__name__).info(f"Health check server started and listening on port {port}")
+        else:
+            get_logger(__name__).warning(f"Health check server started but may not be listening on port {port}")
+        return server
     except Exception as e:
-        get_logger(__name__).warning(f"Failed to start health check server: {e}")
+        get_logger(__name__).error(f"Failed to start health check server: {e}", exc_info=True)
+        return None
 
 def main():
     """Main entry point for the mcp-redmine package."""
     # Start health check server if PORT environment variable is set (App Platform)
-    health_port = os.environ.get('PORT', os.environ.get('HTTP_PORT', '8080'))
+    # App Platform sets PORT automatically based on http_port
+    health_port = os.environ.get('PORT', '8080')
     try:
-        start_health_server(int(health_port))
-    except (ValueError, OSError):
+        health_server = start_health_server(int(health_port))
+        if health_server is None:
+            get_logger(__name__).warning("Health check server failed to start, continuing without it")
+    except (ValueError, OSError) as e:
         # If port is not set or not available, continue without health server
-        pass
+        get_logger(__name__).warning(f"Could not start health check server: {e}")
     
     # Run the MCP server (stdio-based)
+    # This blocks, so the health server thread will continue running
     mcp.run()
 
 if __name__ == "__main__":

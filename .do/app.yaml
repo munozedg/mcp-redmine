@@ -25,6 +25,10 @@ services:
       success_threshold: 1
       failure_threshold: 3
     envs:
+      - key: PORT
+        scope: RUN_TIME
+        type: GENERAL
+        value: "8080"
       - key: REDMINE_URL
         scope: RUN_TIME
         type: SECRET
