@@ -232,6 +232,18 @@ MCP Redmine is listed in the following MCP directory sites and repositories:
 - [MCP.so](https://mcp.so/server/mcp-redmine)
 - [Glama](https://glama.ai/mcp/servers/@runekaagaard/mcp-redmine)
 
+## Deployment
+
+### Deploying to Digital Ocean App Platform
+
+This MCP server can be deployed to Digital Ocean App Platform for cloud hosting. See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment instructions.
+
+The deployment uses:
+- Digital Ocean App Platform's native GitHub integration
+- Automatic builds and deployments on push to main branch
+- Docker containerization via the included Dockerfile
+- Environment variables for secure configuration
+
 ## Developing
 
 First clone the github repository and install the dependencies:

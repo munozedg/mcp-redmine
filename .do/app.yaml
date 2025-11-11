@@ -1,0 +1,41 @@
+name: mcp-redmine
+region: nyc
+
+# Note: Update the 'repo' field below with your GitHub username/repository
+# if you're deploying from a fork or your own repository
+
+services:
+  - name: mcp-redmine
+    github:
+      repo: munozedg/mcp-redmine
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: Dockerfile
+    docker_build_args: []
+    source_dir: /
+    environment_slug: docker
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 8080
+    health_check:
+      http_path: /
+      initial_delay_seconds: 10
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    envs:
+      - key: REDMINE_URL
+        scope: RUN_TIME
+        type: SECRET
+      - key: REDMINE_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: REDMINE_REQUEST_INSTRUCTIONS
+        scope: RUN_TIME
+        type: GENERAL
+        value: ""
+    routes:
+      - path: /
+    run_command: uv run --directory /app -m mcp_redmine.server main
+
