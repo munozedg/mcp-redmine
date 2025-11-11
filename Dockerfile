@@ -28,5 +28,8 @@ USER appuser
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 
+# Expose port for health checks
+EXPOSE 8080
+
 # Run the MCP server
 CMD ["uv", "run", "--directory", "/app", "-m", "mcp_redmine.server", "main"]

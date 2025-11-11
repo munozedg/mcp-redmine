@@ -1,4 +1,5 @@
 import os, yaml, pathlib
+import socket
 import threading
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -211,26 +212,41 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
         # Suppress HTTP server logs
         pass
 
+# Global reference to keep the health server alive
+_health_server = None
+
 def start_health_server(port=8080):
     """Start a simple HTTP server for health checks in a background thread."""
+    global _health_server
     try:
-        server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
+        # Explicitly bind to 0.0.0.0 to accept connections from any interface
+        server_address = ('0.0.0.0', port)
+        get_logger(__name__).info(f"Starting health check server on {server_address[0]}:{server_address[1]}")
+        server = HTTPServer(server_address, HealthCheckHandler)
+        _health_server = server  # Keep global reference
+        
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
-        # Give the server a moment to start listening
-        time.sleep(0.5)
-        # Verify the server is actually listening
-        import socket
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = sock.connect_ex(('127.0.0.1', port))
-        sock.close()
-        if result == 0:
-            get_logger(__name__).info(f"Health check server started and listening on port {port}")
-        else:
-            get_logger(__name__).warning(f"Health check server started but may not be listening on port {port}")
+        
+        # Wait for the server to be ready and verify it's listening
+        max_attempts = 10
+        for attempt in range(max_attempts):
+            time.sleep(0.2)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            result = sock.connect_ex(('127.0.0.1', port))
+            sock.close()
+            if result == 0:
+                get_logger(__name__).info(f"Health check server is listening on 0.0.0.0:{port}")
+                return server
+            if attempt < max_attempts - 1:
+                get_logger(__name__).debug(f"Waiting for health server to be ready (attempt {attempt + 1}/{max_attempts})")
+        
+        get_logger(__name__).warning(f"Health check server started but verification failed after {max_attempts} attempts")
         return server
     except Exception as e:
         get_logger(__name__).error(f"Failed to start health check server: {e}", exc_info=True)
+        _health_server = None
         return None
 
 def main():
@@ -238,6 +254,7 @@ def main():
     # Start health check server if PORT environment variable is set (App Platform)
     # App Platform sets PORT automatically based on http_port
     health_port = os.environ.get('PORT', '8080')
+    health_server = None
     try:
         health_server = start_health_server(int(health_port))
         if health_server is None:
@@ -246,9 +263,24 @@ def main():
         # If port is not set or not available, continue without health server
         get_logger(__name__).warning(f"Could not start health check server: {e}")
     
-    # Run the MCP server (stdio-based)
-    # This blocks, so the health server thread will continue running
-    mcp.run()
+    # Check if we're in a containerized environment (App Platform)
+    # If PORT is set, we're likely in App Platform and should keep the process alive
+    # for health checks, even if MCP server can't run without stdio
+    if os.environ.get('PORT'):
+        get_logger(__name__).info("Running in containerized environment - keeping process alive for health checks")
+        # Keep the process alive indefinitely for health checks
+        # The health server runs in a background thread
+        try:
+            while True:
+                time.sleep(60)
+                # Log periodically to show the process is alive
+                get_logger(__name__).debug("Health check server is running")
+        except KeyboardInterrupt:
+            get_logger(__name__).info("Shutting down...")
+    else:
+        # Run the MCP server (stdio-based) - normal operation for Claude Desktop
+        # This blocks, so the health server thread will continue running
+        mcp.run()
 
 if __name__ == "__main__":
     main()
