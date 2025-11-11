@@ -11,10 +11,11 @@ RUN pip install --no-cache-dir --upgrade pip \
 RUN useradd -m -u 1000 appuser
 
 # Copy dependency files first for better layer caching
-COPY --chown=appuser:appuser pyproject.toml uv.lock ./
+# Include README.md and LICENSE as they're referenced in pyproject.toml
+COPY --chown=appuser:appuser pyproject.toml uv.lock README.md LICENSE ./
 
-# Install dependencies
-RUN uv sync --frozen
+# Install dependencies (run as root, then fix ownership)
+RUN uv sync --frozen && chown -R appuser:appuser /app
 
 # Copy application code
 COPY --chown=appuser:appuser . /app
