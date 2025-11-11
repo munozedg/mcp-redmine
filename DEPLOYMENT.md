@@ -91,6 +91,32 @@ The `.do/app.yaml` file configures:
 2. Look for: `Starting MCP Redmine version X.X.X.X`
 3. Verify there are no error messages about missing environment variables
 
+### Testing the Health Endpoint
+
+You can test the health check endpoint using curl or the provided test scripts:
+
+**Using curl:**
+```bash
+# Get your App Platform URL from the Digital Ocean dashboard
+curl https://your-app-url.ondigitalocean.app/health
+# Should return: {"status":"ok","service":"mcp-redmine"}
+```
+
+**Using the test script (Linux/Mac):**
+```bash
+bash test_deployment.sh https://your-app-url.ondigitalocean.app
+```
+
+**Using the test script (Windows PowerShell):**
+```powershell
+.\test_deployment.ps1 -AppUrl "https://your-app-url.ondigitalocean.app"
+```
+
+**To find your App Platform URL:**
+1. Go to Digital Ocean Dashboard > Apps
+2. Click on your `mcp-redmine` app
+3. The URL will be shown in the app overview (e.g., `mcp-redmine-xxxxx.ondigitalocean.app`)
+
 ## Important Notes
 
 ### MCP Server Communication
@@ -103,11 +129,42 @@ MCP servers communicate via **stdio** (stdin/stdout), not HTTP. This means:
 
 ### Using with Claude Desktop
 
-This deployment is for running the MCP server in a cloud environment. To connect Claude Desktop:
+**Important**: The MCP server deployed on App Platform is running and healthy, but **it cannot be directly connected to Claude Desktop** because:
 
-1. You may need to set up an MCP gateway or proxy
-2. Alternatively, run the server locally and connect to your Redmine instance
-3. The server can be accessed via SSH or other remote execution methods
+1. MCP servers communicate via **stdio** (stdin/stdout), not HTTP
+2. Claude Desktop needs to launch the server as a subprocess
+3. The App Platform deployment is containerized and not accessible via stdio
+
+**To actually use the MCP server with Claude Desktop, you have two options:**
+
+#### Option 1: Run Locally (Recommended)
+Run the MCP server locally on your machine and connect to your Redmine instance:
+
+```json
+{
+  "mcpServers": {
+    "redmine": {
+      "command": "uvx",
+      "args": ["--from", "mcp-redmine", "mcp-redmine"],
+      "env": {
+        "REDMINE_URL": "https://your-redmine-instance.example.com",
+        "REDMINE_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+#### Option 2: SSH to App Platform (Advanced)
+If you need to use the deployed server, you would need to:
+1. Set up SSH access to your App Platform container
+2. Configure Claude Desktop to SSH into the container and run the server
+3. This is complex and not recommended for most users
+
+**The App Platform deployment is useful for:**
+- Testing and validation
+- Running the server in a managed environment
+- Future integration with MCP gateways or proxies (when available)
 
 ### Alternative: Local Deployment
 
