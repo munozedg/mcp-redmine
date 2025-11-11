@@ -7,10 +7,46 @@ This bypasses the MCP protocol and directly tests the Redmine API functions
 import os
 import sys
 import yaml
+from pathlib import Path
 
 # Add the current directory to the path so we can import mcp_redmine
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+
+def load_env_file(env_path=".env"):
+    """Load environment variables from .env file"""
+    env_file = Path(env_path)
+    if env_file.exists():
+        print(f"Loading environment variables from {env_path}...")
+        with open(env_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                # Skip empty lines and comments
+                if not line or line.startswith('#'):
+                    continue
+                # Parse KEY=VALUE format
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    key = key.strip()
+                    value = value.strip()
+                    # Remove quotes if present
+                    if value.startswith('"') and value.endswith('"'):
+                        value = value[1:-1]
+                    elif value.startswith("'") and value.endswith("'"):
+                        value = value[1:-1]
+                    # Set environment variable (override existing if in .env)
+                    if key:
+                        os.environ[key] = value
+        print("✓ Environment variables loaded from .env file")
+        return True
+    return False
+
+
+# Load .env file BEFORE importing mcp_redmine.server
+# because server.py reads environment variables at import time
+load_env_file(".env")
+
+# Now we can safely import the server module
 from mcp_redmine.server import request, redmine_paths_list, redmine_paths_info, redmine_request
 
 def test_redmine_connection():
@@ -152,17 +188,37 @@ def main():
     print("=" * 60)
     print()
     
+    # Note: .env file is already loaded before importing the module
+    # Check if it was loaded
+    env_file = Path(".env")
+    if not env_file.exists():
+        print("No .env file found, using environment variables...")
+    print()
+    
     # Check environment variables
     if not os.environ.get("REDMINE_URL"):
         print("ERROR: REDMINE_URL environment variable not set")
-        print("Set it with: export REDMINE_URL='https://your-redmine-instance.com'")
-        print("Or on Windows: set REDMINE_URL=https://your-redmine-instance.com")
+        print()
+        print("Create a .env file in the project root with:")
+        print("  REDMINE_URL=https://your-redmine-instance.com")
+        print("  REDMINE_API_KEY=your-api-key")
+        print()
+        print("Or set environment variables:")
+        print("  export REDMINE_URL='https://your-redmine-instance.com'")
+        print("  export REDMINE_API_KEY='your-api-key'")
+        print("  (On Windows: set REDMINE_URL=... and set REDMINE_API_KEY=...)")
         sys.exit(1)
     
     if not os.environ.get("REDMINE_API_KEY"):
         print("ERROR: REDMINE_API_KEY environment variable not set")
-        print("Set it with: export REDMINE_API_KEY='your-api-key'")
-        print("Or on Windows: set REDMINE_API_KEY=your-api-key")
+        print()
+        print("Create a .env file in the project root with:")
+        print("  REDMINE_URL=https://your-redmine-instance.com")
+        print("  REDMINE_API_KEY=your-api-key")
+        print()
+        print("Or set environment variables:")
+        print("  export REDMINE_API_KEY='your-api-key'")
+        print("  (On Windows: set REDMINE_API_KEY=...)")
         sys.exit(1)
     
     print(f"Redmine URL: {os.environ.get('REDMINE_URL')}")
@@ -177,7 +233,7 @@ def main():
         results.append(("List API Paths", test_list_paths()))
         results.append(("Get Projects", test_get_projects()))
         results.append(("Get Issues", test_get_issues()))
-        results.append(("Get Issue #1", test_get_issue_by_id(1)))
+        results.append(("Get Issue #3844", test_get_issue_by_id(3844)))
         
         # Summary
         print("=" * 60)
