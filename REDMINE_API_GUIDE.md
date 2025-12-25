@@ -193,12 +193,17 @@ GET /search.json?q=SEARCHTERM&projects=1&scope=all
 - User: "Projects with mobile" → `/search.json?q=mobile&projects=1&scope=all`  
 - User: "Find web projects" → `/search.json?q=web&projects=1&scope=all`
 
-**ALTERNATIVE: For exact name matching only:**
+**PREFER THE TOOL: For issue searches, use the new dedicated tool:**
+- `redmine_search_issues(query="term", status_id="*")`
+- This tool handles fuzzy matching automatically and is much more effective than constructing manual API calls.
+
+**MANUAL ALTERNATIVE: For exact name matching only:**
 ```
 GET /projects.json?name=EXACT_PROJECT_NAME
 ```
 
-**CRITICAL: Never use fake parameters like text_search, fuzzy_name, etc. They don't exist in Redmine!**
+**NOTE:** The new API schema NOW SUPPORTS fuzzy search parameters like `text_search` on the `/issues.json` endpoint, which the `redmine_search_issues` tool uses internally.
+
 
 ## Proactive Intelligence & Suggestions
 

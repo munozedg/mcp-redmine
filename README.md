@@ -12,8 +12,10 @@ Let Claude be your Redmine assistant! MCP Redmine connects Claude Desktop to you
 - Manage and track time entries
 - Update issue statuses and fields
 - Access comprehensive Redmine API functionality
+- **NEW**: Enhanced search with fuzzy matching for issues and projects
+- **NEW**: Optimized performance with smart caching
 
-Uses httpx for API requests and integrates with the Redmine OpenAPI specification for comprehensive API coverage.
+Uses httpx for API requests and integrates with a custom, high-fidelity OpenAPI specification for comprehensive API coverage including custom fields.
 
 ![MCP Redmine in action](https://raw.githubusercontent.com/runekaagaard/mcp-redmine/refs/heads/main/screenshot.png)
 
@@ -143,6 +145,22 @@ Add to your `claude_desktop_config.json`:
       operationId: getIssues
       parameters:
         - $ref: '#/components/parameters/format'
+      ...
+  ```
+
+- **redmine_search_issues**
+  - Smart search for issues using fuzzy matching on subject and description
+  - Inputs:
+    - `query` (string): The search text to fuzzily match against issue subjects and descriptions
+    - `project_id` (integer, optional): Optional project ID to limit search
+    - `status_id` (string, optional): Issue status filter (default: "open", use "*" for all)
+    - `limit` (integer, optional): Maximum number of results to return (default: 10)
+  - Returns YAML string containing search results:
+  ```yaml
+  issues:
+    - id: 123
+      subject: "Fix login page"
+      score: 0.85
       ...
   ```
 
