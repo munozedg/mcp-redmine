@@ -71,7 +71,16 @@ def yd(obj):
 
 
 # Tools
-mcp = FastMCP("Redmine MCP server")
+mcp = FastMCP(
+    "Redmine",
+    dependencies=[
+        "httpx>=0.28.1",
+        "mcp[cli]>=1.3.0",
+        "openapi-core>=0.19.4",
+        "pyyaml>=6.0.2",
+    ],
+    transport="sse"
+)
 get_logger(__name__).info(f"Starting MCP Redmine version {VERSION}")
 
 @mcp.tool(description="""
