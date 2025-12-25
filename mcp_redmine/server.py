@@ -3,6 +3,7 @@ import socket
 import threading
 import time
 import asyncio
+from functools import lru_cache
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urljoin
 
@@ -91,6 +92,7 @@ def redmine_request(path: str, method: str = 'get', data: dict = None, params: d
     return yd(request(path, method=method, data=data, params=params))
 
 @mcp.tool()
+@lru_cache(maxsize=None)
 def redmine_paths_list() -> str:
     """Return a list of available API paths from OpenAPI spec
     
@@ -103,6 +105,7 @@ def redmine_paths_list() -> str:
     return yd(list(SPEC['paths'].keys()))
 
 @mcp.tool()
+@lru_cache(maxsize=None)
 def redmine_paths_info(path_templates: list) -> str:
     """Get full path information for given path templates
     
@@ -187,6 +190,30 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
         return yd({"status_code": 200, "body": {"saved_to": str(path), "filename": filename}, "error": ""})
     except Exception as e:
         return yd({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
+
+@mcp.tool()
+def redmine_search_issues(query: str, project_id: int = None, status_id: str = "open", limit: int = 10) -> str:
+    """
+    Smart search for issues using fuzzy matching on subject and description.
+    
+    Args:
+        query: The search text to fuzzily match against issue subjects and descriptions
+        project_id: Optional project ID to limit search
+        status_id: Issue status filter (default: "open", use "*" for all)
+        limit: Maximum number of results to return (default: 10)
+        
+    Returns:
+        str: YAML string containing search results
+    """
+    params = {
+        'text_search': query,
+        'limit': limit,
+        'status_id': status_id
+    }
+    if project_id:
+        params['project_id'] = project_id
+        
+    return yd(request('/issues.json', method='get', params=params))
 
 class HealthCheckHandler(BaseHTTPRequestHandler):
     """Simple HTTP handler for health checks."""
