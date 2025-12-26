@@ -172,3 +172,5 @@ cython_debug/
 
 # project
 INSTRUCTIONS.md
+stderr.txt
+stdout.txt
