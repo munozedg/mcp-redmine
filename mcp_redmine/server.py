@@ -319,7 +319,8 @@ async def run_sse_with_cors(mcp_instance, host, port):
         if request.method == "GET":
             return await handle_sse(request)
         elif request.method == "POST":
-            return await sse.handle_post_message(request)
+            await sse.handle_post_message(request.scope, request.receive, request._send)
+            return None
         else:
             return JSONResponse({"error": "Method not allowed"}, status_code=405)
 
