@@ -298,7 +298,7 @@ import uvicorn
 async def run_sse_with_cors(mcp_instance, host, port):
     """Custom run loop to enable CORS for the SSE server"""
     # Create the SSE transport
-    sse = SseServerTransport("/messages/")
+    sse = SseServerTransport("/messages")
 
     async def handle_sse(request):
         async with sse.connect_sse(
@@ -327,7 +327,7 @@ async def run_sse_with_cors(mcp_instance, host, port):
         middleware=middleware,
         routes=[
             Route("/sse", endpoint=handle_sse),
-            Mount("/messages/", app=sse.handle_post_message),
+            Mount("/messages", app=sse.handle_post_message),
         ],
     )
 
