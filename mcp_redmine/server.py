@@ -288,110 +288,17 @@ def start_health_server(port=8080):
 
 def main():
     """Main entry point for the mcp-redmine package."""
-    # Start health check server if PORT environment variable is set (App Platform)
-    # App Platform sets PORT automatically based on http_port
-    health_port = os.environ.get('PORT', '8080')
-    health_server = None
-    try:
-        health_server = start_health_server(int(health_port))
-        if health_server is None:
-            get_logger(__name__).warning("Health check server failed to start, continuing without it")
-    except (ValueError, OSError) as e:
-        # If port is not set or not available, continue without health server
-        get_logger(__name__).warning(f"Could not start health check server: {e}")
+    # Get port from environment (App Platform sets PORT), default to 8080
+    port = int(os.environ.get('PORT', 8080))
     
-    # Check if we're in a containerized environment (App Platform)
-    # If PORT is set, we're likely in App Platform and should keep the process alive
-    # for health checks, even if MCP server can't run without stdio
-    if os.environ.get('PORT'):
-        get_logger(__name__).info("Running in containerized environment - keeping process alive for health checks")
-        # Keep the process alive indefinitely for health checks
-        # The health server runs in a background thread
-        try:
-            while True:
-                time.sleep(60)
-                # Log periodically to show the process is alive
-                get_logger(__name__).debug("Health check server is running")
-        except KeyboardInterrupt:
-            get_logger(__name__).info("Shutting down...")
-    else:
-        # Run the MCP server (stdio-based) - normal operation for Claude Desktop
-        # This blocks, so the health server thread will continue running
-        try:
-            # Try to detect if we're in an environment with an existing event loop
-            # (e.g., fastmcp.cloud, Jupyter, etc.)
-            has_running_loop = False
-            try:
-                asyncio.get_running_loop()
-                has_running_loop = True
-            except RuntimeError:
-                # No running loop - this is the normal case
-                has_running_loop = False
-            
-            if has_running_loop:
-                # We're in an environment with an existing event loop
-                # FastMCP's run() method will fail, so we need an alternative
-                get_logger(__name__).info("Detected existing event loop - using async startup method")
-                
-                # Try to use run_async() if available (FastMCP might provide this)
-                server_started = False
-                if hasattr(mcp, 'run_async'):
-                    try:
-                        # Schedule the async run on the existing loop
-                        loop = asyncio.get_running_loop()
-                        task = loop.create_task(mcp.run_async())
-                        get_logger(__name__).info("MCP server started with run_async() on existing event loop")
-                        server_started = True
-                        # Keep process alive - the task will run in the background
-                        while True:
-                            time.sleep(60)
-                            if task.done():
-                                get_logger(__name__).warning("MCP server task completed unexpectedly")
-                                break
-                            get_logger(__name__).debug("MCP server process alive")
-                    except Exception as e:
-                        get_logger(__name__).error(f"Error starting with run_async(): {e}", exc_info=True)
-                        server_started = False
-                
-                # If run_async() doesn't work or doesn't exist, just keep alive
-                # The platform (fastmcp.cloud) should handle the server lifecycle
-                if not server_started:
-                    get_logger(__name__).info("MCP server initialized - platform will manage connections")
-                    while True:
-                        time.sleep(60)
-                        get_logger(__name__).debug("MCP server process alive")
-            else:
-                # Normal case: no existing event loop, safe to use mcp.run()
-                mcp.run()
-                
-        except RuntimeError as e:
-            error_msg = str(e).lower()
-            if "asyncio" in error_msg and ("running" in error_msg or "already" in error_msg):
-                # Handle the "Already running asyncio" error from inside mcp.run()
-                get_logger(__name__).warning(f"Event loop conflict detected: {e}")
-                get_logger(__name__).info("Switching to async-compatible mode")
-                
-                # Try to use the existing loop if we can access it
-                try:
-                    loop = asyncio.get_running_loop()
-                    if hasattr(mcp, 'run_async'):
-                        task = loop.create_task(mcp.run_async())
-                        get_logger(__name__).info("MCP server started with run_async() in fallback mode")
-                    else:
-                        get_logger(__name__).info("MCP server initialized - platform will manage connections")
-                except Exception as inner_e:
-                    get_logger(__name__).warning(f"Could not start async server: {inner_e}")
-                
-                # Keep the process alive - the platform will handle connections
-                try:
-                    while True:
-                        time.sleep(60)
-                        get_logger(__name__).debug("MCP server process alive (fallback mode)")
-                except KeyboardInterrupt:
-                    get_logger(__name__).info("Shutting down...")
-            else:
-                # Re-raise if it's a different RuntimeError
-                raise
+    # Run the MCP server with SSE transport
+    # We bind to 0.0.0.0 to make it accessible from outside the container
+    get_logger(__name__).info(f"Starting MCP Redmine server on 0.0.0.0:{port}")
+    try:
+        mcp.run(host="0.0.0.0", port=port)
+    except Exception as e:
+        get_logger(__name__).error(f"Failed to start server: {e}", exc_info=True)
+        raise
 
 if __name__ == "__main__":
     main()
