@@ -292,40 +292,46 @@ from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 from starlette.routing import Mount, Route
 from mcp.server.sse import SseServerTransport
 import uvicorn
 import mcp.server.stdio
 
+class ASGIInstance(Response):
+    def __init__(self, app):
+        self.app = app
+    
+    async def __call__(self, scope, receive, send):
+        await self.app(scope, receive, send)
+
 async def run_sse_with_cors(mcp_instance, host, port):
     """Custom run loop to enable CORS for the SSE server"""
-    # Create the SSE transport
-    sse = SseServerTransport("/messages")
+    # Create the SSE transport - Use /sse to match client behavior
+    sse = SseServerTransport("/sse")
 
-    async def dispatch_sse(scope, receive, send):
-        if scope["type"] != "http":
-            return
-            
-        request = Request(scope, receive)
+    async def dispatch_sse(request):
         # Log headers for debugging auth
-        get_logger(__name__).info(f"Incoming {request.method} request to {scope['path']}")
+        get_logger(__name__).info(f"Incoming {request.method} request to {request.url.path}")
         get_logger(__name__).info(f"Headers: {dict(request.headers)}")
         
         if request.method == "POST":
-            # Direct ASGI call - no return value expected by Mount
-            await sse.handle_post_message(scope, receive, send)
+            # Wrap the ASGI app in a Response compatible object
+            return ASGIInstance(sse.handle_post_message)
         elif request.method == "GET":
             # Connect SSE stream and run request loop
-            async with sse.connect_sse(scope, receive, send) as streams:
+            async with sse.connect_sse(
+                request.scope, request.receive, request._send
+            ) as streams:
                 await mcp_instance._mcp_server.run(
                     streams[0],
                     streams[1],
                     mcp_instance._mcp_server.create_initialization_options(),
                 )
+            # When run finishes (connection closed), we return None, which Starlette handles as response done
+            return None
         else:
-            response = JSONResponse({"error": "Method not allowed"}, status_code=405)
-            await response(scope, receive, send)
+            return JSONResponse({"error": "Method not allowed"}, status_code=405)
 
     async def handle_root(request):
         return JSONResponse({"status": "online", "service": "mcp-redmine", "mode": "sse"})
@@ -350,7 +356,7 @@ async def run_sse_with_cors(mcp_instance, host, port):
         routes=[
             Route("/", endpoint=handle_root),
             Route("/health", endpoint=handle_health),
-            Mount("/sse", app=dispatch_sse),
+            Route("/sse", endpoint=dispatch_sse, methods=["GET", "POST"]),
             Mount("/messages", app=sse.handle_post_message),
         ],
     )
