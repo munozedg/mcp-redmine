@@ -305,12 +305,23 @@ async def run_sse_with_cors(mcp_instance, host, port):
         async with sse.connect_sse(
             request.scope, request.receive, request._send
         ) as streams:
-            # We need to access the underlying MCPServer from FastMCP
             await mcp_instance._mcp_server.run(
                 streams[0],
                 streams[1],
                 mcp_instance._mcp_server.create_initialization_options(),
             )
+
+    async def handle_sse_dispatch(request):
+        # Log headers for debugging auth
+        get_logger(__name__).info(f"Incoming {request.method} request to {request.url.path}")
+        get_logger(__name__).info(f"Headers: {dict(request.headers)}")
+        
+        if request.method == "GET":
+            return await handle_sse(request)
+        elif request.method == "POST":
+            return await sse.handle_post_message(request)
+        else:
+            return JSONResponse({"error": "Method not allowed"}, status_code=405)
 
     async def handle_root(request):
         return JSONResponse({"status": "online", "service": "mcp-redmine", "mode": "sse"})
@@ -335,7 +346,7 @@ async def run_sse_with_cors(mcp_instance, host, port):
         routes=[
             Route("/", endpoint=handle_root),
             Route("/health", endpoint=handle_health),
-            Route("/sse", endpoint=handle_sse),
+            Route("/sse", endpoint=handle_sse_dispatch, methods=["GET", "POST"]),
             Mount("/messages", app=sse.handle_post_message),
         ],
     )
