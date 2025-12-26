@@ -291,38 +291,41 @@ def start_health_server(port=8080):
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
+from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 from mcp.server.sse import SseServerTransport
 import uvicorn
+import mcp.server.stdio
 
 async def run_sse_with_cors(mcp_instance, host, port):
     """Custom run loop to enable CORS for the SSE server"""
     # Create the SSE transport
     sse = SseServerTransport("/messages")
 
-    async def handle_sse(request):
-        async with sse.connect_sse(
-            request.scope, request.receive, request._send
-        ) as streams:
-            await mcp_instance._mcp_server.run(
-                streams[0],
-                streams[1],
-                mcp_instance._mcp_server.create_initialization_options(),
-            )
-
-    async def handle_sse_dispatch(request):
+    async def dispatch_sse(scope, receive, send):
+        if scope["type"] != "http":
+            return
+            
+        request = Request(scope, receive)
         # Log headers for debugging auth
-        get_logger(__name__).info(f"Incoming {request.method} request to {request.url.path}")
+        get_logger(__name__).info(f"Incoming {request.method} request to {scope['path']}")
         get_logger(__name__).info(f"Headers: {dict(request.headers)}")
         
-        if request.method == "GET":
-            return await handle_sse(request)
-        elif request.method == "POST":
-            await sse.handle_post_message(request.scope, request.receive, request._send)
-            return None
+        if request.method == "POST":
+            # Direct ASGI call - no return value expected by Mount
+            await sse.handle_post_message(scope, receive, send)
+        elif request.method == "GET":
+            # Connect SSE stream and run request loop
+            async with sse.connect_sse(scope, receive, send) as streams:
+                await mcp_instance._mcp_server.run(
+                    streams[0],
+                    streams[1],
+                    mcp_instance._mcp_server.create_initialization_options(),
+                )
         else:
-            return JSONResponse({"error": "Method not allowed"}, status_code=405)
+            response = JSONResponse({"error": "Method not allowed"}, status_code=405)
+            await response(scope, receive, send)
 
     async def handle_root(request):
         return JSONResponse({"status": "online", "service": "mcp-redmine", "mode": "sse"})
@@ -347,7 +350,7 @@ async def run_sse_with_cors(mcp_instance, host, port):
         routes=[
             Route("/", endpoint=handle_root),
             Route("/health", endpoint=handle_health),
-            Route("/sse", endpoint=handle_sse_dispatch, methods=["GET", "POST"]),
+            Mount("/sse", app=dispatch_sse),
             Mount("/messages", app=sse.handle_post_message),
         ],
     )
