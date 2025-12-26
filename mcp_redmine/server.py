@@ -3,6 +3,7 @@ import socket
 import threading
 import time
 import asyncio
+import anyio
 from functools import lru_cache
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urljoin
@@ -286,19 +287,70 @@ def start_health_server(port=8080):
         _health_server = None
         return None
 
+# Add necessary imports for custom SSE run with CORS
+from starlette.applications import Starlette
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Mount, Route
+from mcp.server.sse import SseServerTransport
+import uvicorn
+
+async def run_sse_with_cors(mcp_instance, host, port):
+    """Custom run loop to enable CORS for the SSE server"""
+    # Create the SSE transport
+    sse = SseServerTransport("/messages/")
+
+    async def handle_sse(request):
+        async with sse.connect_sse(
+            request.scope, request.receive, request._send
+        ) as streams:
+            # We need to access the underlying MCPServer from FastMCP
+            await mcp_instance._mcp_server.run(
+                streams[0],
+                streams[1],
+                mcp_instance._mcp_server.create_initialization_options(),
+            )
+
+    # Configure CORS middleware
+    middleware = [
+        Middleware(
+            CORSMiddleware,
+            allow_origins=["*"],  # Allow all origins for Connector
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+    ]
+
+    # Create the Starlette app with CORS and routes
+    starlette_app = Starlette(
+        debug=True,
+        middleware=middleware,
+        routes=[
+            Route("/sse", endpoint=handle_sse),
+            Mount("/messages/", app=sse.handle_post_message),
+        ],
+    )
+
+    # Run with Uvicorn
+    config = uvicorn.Config(
+        starlette_app,
+        host=host,
+        port=port,
+        log_level="info",
+    )
+    server = uvicorn.Server(config)
+    await server.serve()
+
 def main():
     """Main entry point for the mcp-redmine package."""
     # Get port from environment (App Platform sets PORT), default to 8080
     port = int(os.environ.get('PORT', 8080))
     
-    # Run the MCP server with SSE transport
-    # We bind to 0.0.0.0 to make it accessible from outside the container
-    get_logger(__name__).info(f"Starting MCP Redmine server on 0.0.0.0:{port}")
+    get_logger(__name__).info(f"Starting MCP Redmine server on 0.0.0.0:{port} with CORS enabled")
+    
     try:
-        # FastMCP settings must be updated directly as run() doesn't accept host/port
-        mcp.settings.host = "0.0.0.0"
-        mcp.settings.port = port
-        mcp.run(transport="sse")
+        # Run using our custom async runner
+        anyio.run(run_sse_with_cors, mcp, "0.0.0.0", port)
     except Exception as e:
         get_logger(__name__).error(f"Failed to start server: {e}", exc_info=True)
         raise
