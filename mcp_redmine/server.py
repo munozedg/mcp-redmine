@@ -295,7 +295,10 @@ def main():
     # We bind to 0.0.0.0 to make it accessible from outside the container
     get_logger(__name__).info(f"Starting MCP Redmine server on 0.0.0.0:{port}")
     try:
-        mcp.run(host="0.0.0.0", port=port)
+        # FastMCP settings must be updated directly as run() doesn't accept host/port
+        mcp.settings.host = "0.0.0.0"
+        mcp.settings.port = port
+        mcp.run(transport="sse")
     except Exception as e:
         get_logger(__name__).error(f"Failed to start server: {e}", exc_info=True)
         raise
