@@ -343,17 +343,27 @@ async def run_sse_with_cors(mcp_instance, host, port):
 
 def main():
     """Main entry point for the mcp-redmine package."""
-    # Get port from environment (App Platform sets PORT), default to 8080
-    port = int(os.environ.get('PORT', 8080))
+    # Check for PORT environment variable (set by App Platform)
+    port_env = os.environ.get('PORT')
     
-    get_logger(__name__).info(f"Starting MCP Redmine server on 0.0.0.0:{port} with CORS enabled")
-    
-    try:
-        # Run using our custom async runner
-        anyio.run(run_sse_with_cors, mcp, "0.0.0.0", port)
-    except Exception as e:
-        get_logger(__name__).error(f"Failed to start server: {e}", exc_info=True)
-        raise
+    if port_env:
+        # Remote/Docker Deployment: Run SSE with CORS
+        port = int(port_env)
+        get_logger(__name__).info(f"Starting MCP Redmine server on 0.0.0.0:{port} with CORS enabled (SSE mode)")
+        try:
+            anyio.run(run_sse_with_cors, mcp, "0.0.0.0", port)
+        except Exception as e:
+            get_logger(__name__).error(f"Failed to start server: {e}", exc_info=True)
+            raise
+    else:
+        # Local Execution: Run standard stdio
+        # This is what Claude Desktop expects when running locally
+        get_logger(__name__).info("Starting MCP Redmine server in stdio mode (Local)")
+        try:
+            mcp.run(transport="stdio")
+        except Exception as e:
+            get_logger(__name__).error(f"Failed to start local server: {e}", exc_info=True)
+            raise
 
 if __name__ == "__main__":
     main()
