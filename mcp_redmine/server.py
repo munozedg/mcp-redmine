@@ -291,6 +291,7 @@ def start_health_server(port=8080):
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 from mcp.server.sse import SseServerTransport
 import uvicorn
@@ -311,6 +312,12 @@ async def run_sse_with_cors(mcp_instance, host, port):
                 mcp_instance._mcp_server.create_initialization_options(),
             )
 
+    async def handle_root(request):
+        return JSONResponse({"status": "online", "service": "mcp-redmine", "mode": "sse"})
+
+    async def handle_health(request):
+        return JSONResponse({"status": "ok"})
+
     # Configure CORS middleware
     middleware = [
         Middleware(
@@ -326,6 +333,8 @@ async def run_sse_with_cors(mcp_instance, host, port):
         debug=True,
         middleware=middleware,
         routes=[
+            Route("/", endpoint=handle_root),
+            Route("/health", endpoint=handle_health),
             Route("/sse", endpoint=handle_sse),
             Mount("/messages", app=sse.handle_post_message),
         ],
