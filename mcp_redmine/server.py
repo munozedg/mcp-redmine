@@ -381,7 +381,7 @@ def main():
         port = int(port_env)
         get_logger(__name__).info(f"Starting MCP Redmine server on 0.0.0.0:{port} with CORS enabled (SSE mode)")
         try:
-            anyio.run(run_sse_with_cors, mcp, "0.0.0.0", port)
+            anyio.run(run_sse_with_cors, mcp_server, "0.0.0.0", port)
         except Exception as e:
             get_logger(__name__).error(f"Failed to start server: {e}", exc_info=True)
             raise
@@ -390,7 +390,7 @@ def main():
         # This is what Claude Desktop expects when running locally
         get_logger(__name__).info("Starting MCP Redmine server in stdio mode (Local)")
         try:
-            mcp.run(transport="stdio")
+            mcp_server.run(transport="stdio")
         except Exception as e:
             get_logger(__name__).error(f"Failed to start local server: {e}", exc_info=True)
             raise
